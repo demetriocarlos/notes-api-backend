@@ -1,35 +1,56 @@
 //instalar npm install nodemon -D , pababer rapidamente los cambios
 //const http = require('http')
+
+require('dotenv').config()
+
+require('./mongo')
+
+const Sentry = require("@sentry/node");
+const {ProfilingIntegration} = require('@sentry/profiling-node');
+
+//import { ProfilingIntegration } from "@sentry/profiling-node";
+//const ProfilingIntegration = require("@sentry/profiling-node");
 const express = require('express')
 const cors = require('cors')
 const app = express()
 const logger = require('./loggerMiddlewars')
 
+const Note = require('./models/Note')
+const NotFound = require('./middleware/NotFound')
+const handleErrors = require('./middleware/handleErrors')
+
+
 app.use(cors())
 app.use(express.json())
 
+app.use( '/images', express.static('images'))
+
+
+Sentry.init({
+        dsn: "https://e0f494a720e8c30be3a82587f1d95ffb@o4506826946904064.ingest.sentry.io/4506827527815168",
+        integrations: [
+          // enable HTTP calls tracing
+          new Sentry.Integrations.Http({ tracing: true }),
+          // enable Express.js middleware tracing
+          new Sentry.Integrations.Express({ app }),
+          new ProfilingIntegration(),
+        ],
+        // Performance Monitoring
+        tracesSampleRate: 1.0, //  Capture 100% of the transactions
+        // Set sampling rate for profiling - this is relative to tracesSampleRate
+        profilesSampleRate: 1.0,
+      });
+
+ app.use(Sentry.Handlers.requestHandler());
+
+        // TracingHandler creates a trace for every incoming request
+   app.use(Sentry.Handlers.tracingHandler());
+
+
 app.use(logger)
 
-let notes = [  
-        {
-            "id":1,
-            "content":"Me tengo que escribir ",
-            "date":"2019-5-30T17:30:31.098z",
-            "important":true
-        },
-        {
-                 "id":2,
-                "content":"tengo que estudiar las clases fullstack ",
-                "date":"2019-5-30T17:30:31.098z",
-                "important":false
-        },
-        {
-                "id":3,
-                "content":"repasar los retos de js de midudev ",
-                "date":"2019-5-30T17:30:31.098z",
-                "important":true
-        }
-]
+ 
+ 
 
 /*const app = http.createServer((request,response) =>{ 'request'  
         response.writeHead(200,{'Content-Type':'application/json'})
@@ -41,30 +62,64 @@ app.get('/', (request,response) =>{
         response.send('<h1>Hello world</h1>')
 })
 
-app.get('/api/notes', (request,response) =>{
+app.get('/api/notes', (request,response,next) =>{
+        //devolver las notas
+        Note.find({}).then(notes => {
+                response.json(notes)
+        }).catch(err => next(err))
         
-        response.json(notes)
 })
 
-app.get('/api/notes/:id', (request,response) =>{
-        const id = Number(request.params.id)
-        const note = notes.find(note => note.id == id)
+app.get('/api/notes/:id', (request,response, next) =>{
+        const { id } = request.params
+        //encontrar lasnotas po el id
+        Note.findById(id).then(note =>{
+                if(note){
+                        response.json(note)
+                     }else{
+                        response.status(404).end()
+                     }
+        }).catch(err => {
+                next(err)
+                 
+        }) 
+})
 
-        if(note){
-           response.json(note)
-        }else{
-           response.status(404).end()
+
+app.put('/api/notes/:id', (request,response, next) =>{
+        const {id} = request.params
+
+        const note = request.body
+
+        const newNoteInfo = {
+                content: note.content,
+                important: note.important
         }
+        //actualizar resultado utilizando la id  
+        Note.findByIdAndUpdate(id, newNoteInfo,{new: true})
+                .then(result => {
+                        response.json(result)
+                })
+          
+         
+
 })
 
 
-app.delete('/api/notes/:id', (request,response) =>{
-        const id = Number(request.params.id)
-        notes = notes.filter(note => note.id != id)
-        response.status(204).end()
+app.delete('/api/notes/:id', (request,response, next) =>{
+        const {id} = request.params
+
+         Note.findByIdAndDelete(id).then(result => {
+                response.status(204).end()
+         }).catch(error => next(error))
+
+         response.status(204).end()
+
 })
 
-app.post('/api/notes',(request, response) =>{
+
+
+app.post('/api/notes',(request, response,next) =>{
         const note = request.body
         console.log(note)
         //en caso de error
@@ -73,29 +128,30 @@ app.post('/api/notes',(request, response) =>{
                 error:'note.content is missing'
              })
         }
-        //obtener el id
-        const ids = notes.map(note=> note.id)
-        const maxId = Math.max(...ids)
 
-        const newNote ={
-                id: maxId + 1,
+        const newNote = new Note({
                 content:note.content,
-                important: typeof note.important != "undefined" ? note.important: false,
-                date: new Date().toISOString()
-        }
-                //concatenando notes con nuevas notas
-        notes = [...notes, newNote]
+                date: new Date().toISOString(),
+                important: note.important || false
+                
+        })
 
-        response.status(201).json(newNote)
+         
+        newNote.save().then(savedNote => {
+                response.json(savedNote)
+        }).catch(err => next(err))
+
+        //response.status(201).json(newNote)
 });
 
-        app.use((request,response) =>{
-                console.log(response.path)
-                response.status(404).json({
-                        error:'not fount'
-                })
-        })
-const PORT = 3001;
+        
+
+        app.use(NotFound )
+        app.use(Sentry.Handlers.errorHandler());
+        app.use(handleErrors)
+
+//const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () =>{
     console.log(`Server running on port ${PORT}`);
 });
