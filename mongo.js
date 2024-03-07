@@ -1,17 +1,18 @@
 
 const mongoose=require('mongoose')
  
+const {MONGO_DB_URI,MONGO_DB_URI_TEST,NODE_ENV}=process.env
 
-const connectionString =process.env.MONGO_DB_URI  
+const connectionString = NODE_ENV === 'test' 
+       ?MONGO_DB_URI_TEST
+       : MONGO_DB_URI
 
+//const connectionString =process.env.MONGO_DB_URI  
 // conexion a mongodb
-mongoose.connect(connectionString,{
-    useNewUrlParser:true,
-    useUnifiedTopology:true,
-    //useFindAndModify:false,
-    //useCreateIndex:true
-})
-    .then(() =>{
+mongoose.connect( connectionString,{
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+}).then(() =>{
         console.log('database connect')
     }).catch(err =>{
         console.log(err)
@@ -21,9 +22,9 @@ mongoose.connect(connectionString,{
 
     //cuando alla un error desconectar ala base de datos
     process.on('uncaughtException', () => {
-        mongoose.Collection.disconnect()
+        mongoose.connection.disconnect()
     })
-    
+    //mongoose.Collection.disconnect()
 /*
 const noteSchema = new Schema({
     content:String,
