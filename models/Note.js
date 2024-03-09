@@ -4,7 +4,13 @@ const {model,Schema}= require('mongoose')
 const noteSchema = new Schema({
     content:String,
     date:Date,
-    important:Boolean
+    important:Boolean,
+    
+    //el valor almacenado en este campo es el ID de un documento en la colección 'User'.
+    user:{
+        type:Schema.Types.ObjectId,
+        ref:'User'
+    }
 })
 
 //debolviendo la respuesta con las siguientes espesificaciones

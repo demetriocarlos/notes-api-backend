@@ -18,7 +18,7 @@ const logger = require('./loggerMiddlewars')
 const Note = require('./models/Note')
 const NotFound = require('./middleware/NotFound')
 const handleErrors = require('./middleware/handleErrors')
-
+const usersRouter = require('./controllers/users')
 
 app.use(cors())
 app.use(express.json())
@@ -155,6 +155,8 @@ app.post('/api/notes', async(request, response,next) =>{
 });
 
         
+app.use('/api/users',usersRouter)
+
 
         app.use(NotFound )
         app.use(Sentry.Handlers.errorHandler());
