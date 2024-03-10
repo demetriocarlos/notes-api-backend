@@ -1,9 +1,16 @@
 
+const uniqueValidator = require('mongoose-unique-validator')
 const {model,Schema}= require('mongoose')
 
 
 const userSchema = new Schema({
-    username:String,
+    //lo que indica que el valor unico en la coleccion de usuarios
+    username: {
+       type: String,
+       unique:true  // Se especifica que el valor debe ser único
+    },
+
+
     name:String,
     passwordHash:String,
 
@@ -27,6 +34,8 @@ userSchema.set('toJSON', {
     }
 })
 
+//aplicar el unibalidator
+userSchema.plugin(uniqueValidator)
 
 const User = model('User', userSchema)
 
