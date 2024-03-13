@@ -18,7 +18,8 @@ const logger = require('./loggerMiddlewars')
 const Note = require('./models/Note')
 const NotFound = require('./middleware/NotFound')
 const handleErrors = require('./middleware/handleErrors')
-const usersRouter = require('./controllers/users')
+const usersRouter = require('./controllers/users');
+const User = require('./models/User');
 
 app.use(cors())
 app.use(express.json())
@@ -67,15 +68,18 @@ app.get('/api/notes', async (request,response,next) =>{
         /*Note.find({}).then(notes => {
                 response.json(notes)
         }).catch(err => next(err))
-*/
-        const notes = await Note.find({})
+*/                                       //se va atraer la informacion del "user" ace referencia alo creado en "userSchema"
+        const notes = await Note.find({}).populate('user',{
+                username:1,
+                name:1
+        })
         response.json(notes)
         
 })
 
 app.get('/api/notes/:id', (request,response, next) =>{
         const { id } = request.params
-        //encontrar lasnotas po el id
+        //encontrar lasnotas por el id
         Note.findById(id).then(note =>{
                 if(note){
                         response.json(note)
@@ -122,19 +126,27 @@ app.delete('/api/notes/:id', async (request,response, next) =>{
 
 
 app.post('/api/notes', async(request, response,next) =>{
-        const note = request.body
-        console.log(note)
-        //en caso de error
-        if(!note || !note.content){
+        const {
+                content, 
+                important = false,
+                userId
+        } = request.body
+        
+
+        //recuperamos el usuario
+        const user= await User.findById(userId)
+
+        if(!content){
              return response.status(400).json({
                 error:'note.content is missing'
              })
         }
 
         const newNote = new Note({
-                content:note.content,
+                content,
                 date: new Date() ,
-                important: note.important || false
+                important,
+                user:user._id
                 
         })
 
@@ -146,6 +158,11 @@ app.post('/api/notes', async(request, response,next) =>{
 
         try{
                 const savedNote = await newNote.save()
+                //con el usuario accedemos note y recuperar las notas y añadir 1 "savedNote"
+                user.notes = user.notes.concat(savedNote._id)
+                //guardar los cambios del usuario
+                await user.save()
+
                 response.json(savedNote)
         }catch (error){
                 next(error)

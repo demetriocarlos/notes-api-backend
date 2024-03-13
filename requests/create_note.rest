@@ -2,8 +2,9 @@ POST http://localhost:3001/api/notes
 Content-Type: application/json
 
 {
-    "content":"este es una nueva nota  ",
-    "important": true
+    "content":"suscribete a midudev  ",
+    "important": true,
+    "userId":"65ef76b262dce1732d2109f1"
 }
 
 
