@@ -22,7 +22,8 @@ mongoose.connect( connectionString,{
 
     //cuando alla un error desconectar ala base de datos
     process.on('uncaughtException', () => {
-        mongoose.connection.disconnect()
+        //mongoose.connection.disconnect()
+        mongoose.disconnect()
     })
     //mongoose.Collection.disconnect()
 /*

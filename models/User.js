@@ -2,7 +2,7 @@
 const uniqueValidator = require('mongoose-unique-validator')
 const {model,Schema}= require('mongoose')
 
-
+console.log('aaaa')
 const userSchema = new Schema({
     //lo que indica que el valor unico en la coleccion de usuarios
     username: {

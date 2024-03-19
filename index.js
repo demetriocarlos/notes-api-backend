@@ -12,14 +12,18 @@ const {ProfilingIntegration} = require('@sentry/profiling-node');
 //const ProfilingIntegration = require("@sentry/profiling-node");
 const express = require('express')
 const cors = require('cors')
+const jwt = require('jsonwebtoken')
 const app = express()
 const logger = require('./loggerMiddlewars')
 
 const Note = require('./models/Note')
 const NotFound = require('./middleware/NotFound')
 const handleErrors = require('./middleware/handleErrors')
+const userExtractor = require('./middleware/userExtractor')
 const usersRouter = require('./controllers/users');
+const loginRouter = require('./controllers/login')
 const User = require('./models/User');
+ 
 
 app.use(cors())
 app.use(express.json())
@@ -93,7 +97,7 @@ app.get('/api/notes/:id', (request,response, next) =>{
 })
 
 
-app.put('/api/notes/:id', (request,response, next) =>{
+app.put('/api/notes/:id',userExtractor ,(request,response, next) =>{
         const {id} = request.params
 
         const note = request.body
@@ -113,7 +117,7 @@ app.put('/api/notes/:id', (request,response, next) =>{
 })
 
 
-app.delete('/api/notes/:id', async (request,response, next) =>{
+app.delete('/api/notes/:id', userExtractor ,async (request,response, next) =>{
         const {id} = request.params
 
         await Note.findByIdAndDelete(id)
@@ -125,14 +129,19 @@ app.delete('/api/notes/:id', async (request,response, next) =>{
 
 
 
-app.post('/api/notes', async(request, response,next) =>{
+app.post('/api/notes', userExtractor  ,async(request, response,next) =>{
         const {
                 content, 
-                important = false,
-                userId
+                important = false
+                //userId
         } = request.body
-        
 
+        //
+        
+        
+           // sacar userId de request
+           const {userId} = request
+                
         //recuperamos el usuario
         const user= await User.findById(userId)
 
@@ -173,6 +182,7 @@ app.post('/api/notes', async(request, response,next) =>{
 
         
 app.use('/api/users',usersRouter)
+app.use('/api/login',loginRouter)
 
 
         app.use(NotFound )
