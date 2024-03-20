@@ -97,7 +97,7 @@ app.get('/api/notes/:id', (request,response, next) =>{
 })
 
 
-app.put('/api/notes/:id',userExtractor ,(request,response, next) =>{
+app.put('/api/notes/:id', userExtractor ,(request,response, next) =>{
         const {id} = request.params
 
         const note = request.body
@@ -117,7 +117,7 @@ app.put('/api/notes/:id',userExtractor ,(request,response, next) =>{
 })
 
 
-app.delete('/api/notes/:id', userExtractor ,async (request,response, next) =>{
+app.delete('/api/notes/:id',  userExtractor ,async (request,response, next) =>{
         const {id} = request.params
 
         await Note.findByIdAndDelete(id)
@@ -129,7 +129,7 @@ app.delete('/api/notes/:id', userExtractor ,async (request,response, next) =>{
 
 
 
-app.post('/api/notes', userExtractor  ,async(request, response,next) =>{
+app.post('/api/notes',  userExtractor  ,async(request, response,next) =>{
         const {
                 content, 
                 important = false
@@ -139,8 +139,10 @@ app.post('/api/notes', userExtractor  ,async(request, response,next) =>{
         //
         
         
-           // sacar userId de request
-           const {userId} = request
+           
+        // sacar userId de request
+
+        const {userId} = request
                 
         //recuperamos el usuario
         const user= await User.findById(userId)
