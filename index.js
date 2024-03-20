@@ -19,6 +19,7 @@ const logger = require('./loggerMiddlewars')
 const Note = require('./models/Note')
 const NotFound = require('./middleware/NotFound')
 const handleErrors = require('./middleware/handleErrors')
+
 const userExtractor = require('./middleware/userExtractor')
 const usersRouter = require('./controllers/users');
 const loginRouter = require('./controllers/login')
@@ -97,7 +98,7 @@ app.get('/api/notes/:id', (request,response, next) =>{
 })
 
 
-app.put('/api/notes/:id', userExtractor ,(request,response, next) =>{
+app.put('/api/notes/:id',userExtractor ,(request,response, next) =>{
         const {id} = request.params
 
         const note = request.body
@@ -117,7 +118,7 @@ app.put('/api/notes/:id', userExtractor ,(request,response, next) =>{
 })
 
 
-app.delete('/api/notes/:id',  userExtractor ,async (request,response, next) =>{
+app.delete('/api/notes/:id',userExtractor ,async (request,response, next) =>{
         const {id} = request.params
 
         await Note.findByIdAndDelete(id)
@@ -129,7 +130,7 @@ app.delete('/api/notes/:id',  userExtractor ,async (request,response, next) =>{
 
 
 
-app.post('/api/notes',  userExtractor  ,async(request, response,next) =>{
+app.post('/api/notes',userExtractor  ,async(request, response,next) =>{
         const {
                 content, 
                 important = false
